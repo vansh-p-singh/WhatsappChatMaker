@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             WhatsAppChatMakerTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ChatScreen()
+                    ChatScreen(innerPadding)
                 }
             }
         }
