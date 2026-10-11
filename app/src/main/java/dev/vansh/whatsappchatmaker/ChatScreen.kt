@@ -2,9 +2,12 @@ package dev.vansh.whatsappchatmaker
 
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,11 +36,14 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.getValue
@@ -53,30 +59,38 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.time.LocalTime
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChatScreen(innerPadding: PaddingValues){
     var chatList = remember {
         mutableStateListOf<Chat>(
-            Chat("Hi", true, "10:00 AM", null),
-            Chat(
-                "Hallo, wie geht es dir?. Ich vermisee dich so schnell wie möglich",
-                false,
-                "10:01 AM",
-                null
-            ),
-            Chat("I Miss you BOBO!!", true, "10:00 AM", null),
-            Chat("Me too Babe", false, "10:00 AM", null)
         )
     }
+    var userName by rememberSaveable {mutableStateOf("Laura Schmidt") }
+    var showRenameDialog by rememberSaveable {mutableStateOf(false) }
+    var tempNameText by rememberSaveable {mutableStateOf("") }
+
+    var profileImageUri by rememberSaveable {mutableStateOf<Uri?>(null) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = {uri:Uri?->
+            if(uri!=null) {
+                profileImageUri = uri
+            }
+        }
+    )
     var sendButtonMenu by rememberSaveable {
         mutableStateOf(false)
     }
@@ -100,13 +114,67 @@ fun ChatScreen(innerPadding: PaddingValues){
                 }
 
 //                DP
-                Image(painterResource(R.drawable.dp),contentDescription = "Profile Picture", contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(47.dp).clip(CircleShape))
+                if (profileImageUri != null) {
+                    AsyncImage(
+                        model = profileImageUri,
+                        contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(47.dp)
+                            .clip(CircleShape)
+                            .clickable {
+                                imagePickerLauncher.launch("image/*") // Opens gallery on click
+                            }
+                    )
+                }
+                else {
+                    Image(
+                        painterResource(R.drawable.dp),
+                        contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(47.dp).clip(CircleShape).clickable {
+                            imagePickerLauncher.launch("image/*") // Opens gallery on click
+                        })
+                }
 
 //                Name
-                Text(text="Laura Schmidt", fontSize = 18.sp, fontWeight = FontWeight.W400)
+                Text(text=userName, fontSize = 18.sp, fontWeight = FontWeight.W400,modifier = Modifier.clickable {
+                    tempNameText = userName
+                    showRenameDialog = true // Open dialog
+                })
             }
-
+            if (showRenameDialog) {
+                AlertDialog(
+                    onDismissRequest = { showRenameDialog = false },
+                    title = { Text("Rename Contact") },
+                    text = {
+                        TextField(
+                            value = tempNameText,
+                            onValueChange = { tempNameText = it },
+                            placeholder = { Text("Enter name") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                if (tempNameText.trim().isNotBlank()) {
+                                    userName = tempNameText.trim()
+                                }
+                                showRenameDialog = false
+                            }
+                        ) {
+                            Text("Save")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showRenameDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -140,6 +208,17 @@ fun ChatScreen(innerPadding: PaddingValues){
                 modifier = Modifier.fillMaxSize().padding(horizontal = 5.dp)
             ) {
                 LazyColumn() {
+                    item{
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ){
+                            Text(text = "Today", fontSize = 12.sp, color = Color(0xFF5D6266), fontWeight = FontWeight.W500, textAlign = TextAlign.Center, modifier = Modifier.background(Color(0xFFFBFBFB)).padding(vertical = 2.dp, horizontal = 4.dp).clip(RoundedCornerShape(12.dp)))
+                        }
+
+                    }
                     items(chatList) { item ->
                         Box(
                             modifier = Modifier
@@ -204,7 +283,7 @@ fun ChatScreen(innerPadding: PaddingValues){
                 TextField(
                     leadingIcon = {
                         IconButton(onClick = {}) {
-                            Icon(Icons.Default.InsertEmoticon, contentDescription = "Stickers")
+                            Image(painter = painterResource(R.drawable.sticker_send), contentDescription = "Stickers")
                         }
                     },
                     trailingIcon = {
@@ -212,8 +291,20 @@ fun ChatScreen(innerPadding: PaddingValues){
                             IconButton(onClick = {}) {
                                 Icon(Icons.Default.Attachment, contentDescription = "Attachments", modifier = Modifier.rotate(270f))
                             }
-                            IconButton(onClick = {}) {
-                                Icon(Icons.Default.CameraAlt, contentDescription = "Take Picture")
+                            if(text.trim().isBlank()) {
+                                IconButton(onClick = {}) {
+                                    Image(
+                                        painterResource(R.drawable.rupee_send),
+                                        contentDescription = "Take Picture"
+                                    )
+                                }
+
+                                IconButton(onClick = {}) {
+                                    Icon(
+                                        Icons.Default.CameraAlt,
+                                        contentDescription = "Take Picture"
+                                    )
+                                }
                             }
                         }
                     },
@@ -229,7 +320,8 @@ fun ChatScreen(innerPadding: PaddingValues){
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                         disabledIndicatorColor = Color.Transparent,
-                        errorIndicatorColor = Color.Transparent
+                        errorIndicatorColor = Color.Transparent,
+                        cursorColor = Color(0xFF1dab61)
                     ),
                     shape = RoundedCornerShape(28.dp))
                 Spacer(modifier = Modifier.width(15.dp))
