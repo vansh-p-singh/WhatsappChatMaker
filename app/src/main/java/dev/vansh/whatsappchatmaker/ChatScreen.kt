@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -77,7 +78,7 @@ fun ChatScreen(innerPadding: PaddingValues){
         mutableStateListOf<Chat>(
         )
     }
-    var userName by rememberSaveable {mutableStateOf("Laura Schmidt") }
+    var userName by rememberSaveable {mutableStateOf("User Name") }
     var showRenameDialog by rememberSaveable {mutableStateOf(false) }
     var tempNameText by rememberSaveable {mutableStateOf("") }
 
@@ -95,10 +96,10 @@ fun ChatScreen(innerPadding: PaddingValues){
         mutableStateOf(false)
     }
     Column(
-        modifier = Modifier.fillMaxSize().padding(innerPadding)
+        modifier = Modifier.fillMaxSize().padding(innerPadding).imePadding()
     ) {
         Row(
-            modifier = Modifier.height(65.dp).background(Color(0xFFFFFF)).fillMaxWidth().padding(3.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.height(65.dp).background(Color(0xFFFFFFFF)).fillMaxWidth().padding(3.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -339,6 +340,7 @@ fun ChatScreen(innerPadding: PaddingValues){
                                     Chat(msg = text.trim(), userSent = userSent, time = time.toString(),img = null)
                                 )}
                             text=""
+                            sendButtonMenu=false
                         }
                         IconButton(
                             onClick = {
